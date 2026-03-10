@@ -1,0 +1,96 @@
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import api from "../../app/api";
+
+const useDummyData = process.env.REACT_APP_USE_DUMMY_DATA !== "false";
+
+const buildDummyAuthResponse = ({ name = "Demo User", email }) => ({
+  user: {
+    id: "u-demo",
+    name,
+    email
+  },
+  token: "dummy-token-u-demo",
+  message: "Dummy mode active."
+});
+
+const userInfoFromStorage = localStorage.getItem("userInfo")
+  ? JSON.parse(localStorage.getItem("userInfo"))
+  : null;
+
+export const login = createAsyncThunk("auth/login", async (payload, thunkAPI) => {
+  try {
+    if (useDummyData) {
+      const data = buildDummyAuthResponse({ name: "Demo User", email: payload.email });
+      localStorage.setItem("userInfo", JSON.stringify(data));
+      return data;
+    }
+
+    const { data } = await api.post("/auth/login", payload);
+    localStorage.setItem("userInfo", JSON.stringify(data));
+    return data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || "Login failed.");
+  }
+});
+
+export const register = createAsyncThunk("auth/register", async (payload, thunkAPI) => {
+  try {
+    if (useDummyData) {
+      const data = buildDummyAuthResponse({ name: payload.name, email: payload.email });
+      localStorage.setItem("userInfo", JSON.stringify(data));
+      return data;
+    }
+
+    const { data } = await api.post("/auth/register", payload);
+    localStorage.setItem("userInfo", JSON.stringify(data));
+    return data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || "Registration failed.");
+  }
+});
+
+const authSlice = createSlice({
+  name: "auth",
+  initialState: {
+    userInfo: userInfoFromStorage,
+    loading: false,
+    error: null
+  },
+  reducers: {
+    logout: (state) => {
+      state.userInfo = null;
+      state.error = null;
+      localStorage.removeItem("userInfo");
+    }
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(login.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(login.fulfilled, (state, action) => {
+        state.loading = false;
+        state.userInfo = action.payload;
+      })
+      .addCase(login.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(register.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(register.fulfilled, (state, action) => {
+        state.loading = false;
+        state.userInfo = action.payload;
+      })
+      .addCase(register.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+  }
+});
+
+export const { logout } = authSlice.actions;
+export default authSlice.reducer;

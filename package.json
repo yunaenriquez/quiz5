@@ -1,0 +1,10 @@
+{
+  "name": "local-food-guide-monorepo",
+  "private": true,
+  "scripts": {
+    "start": "npm --prefix frontend run start",
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "preview": "npm --prefix frontend run preview"
+  }
+}
