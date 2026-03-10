@@ -25,7 +25,7 @@ const HomeScreen = () => {
     <main className="home-layout">
       <header className="card hero">
         <h1>Kapampangan Food Finder</h1>
-        <p>Ask for food recommendations in Pampanga only.</p>
+        <p>Get recommendations for Kapampangan dishes and Pampanga eateries only.</p>
         <div className="hero-row">
           <span>Welcome, {userInfo?.user?.name || "Food Explorer"}</span>
           <button type="button" className="btn-secondary" onClick={() => dispatch(logout())}>
@@ -49,7 +49,7 @@ const HomeScreen = () => {
           <input
             id="query"
             type="text"
-            placeholder="e.g. Where can I eat sisig in Pampanga?"
+            placeholder="e.g. Where can I eat sisig in San Fernando, Pampanga?"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />

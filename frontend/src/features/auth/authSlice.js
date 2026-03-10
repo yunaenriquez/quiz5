@@ -1,30 +1,12 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import api from "../../app/api";
 
-const useDummyData = process.env.REACT_APP_USE_DUMMY_DATA !== "false";
-
-const buildDummyAuthResponse = ({ name = "Demo User", email }) => ({
-  user: {
-    id: "u-demo",
-    name,
-    email
-  },
-  token: "dummy-token-u-demo",
-  message: "Dummy mode active."
-});
-
 const userInfoFromStorage = localStorage.getItem("userInfo")
   ? JSON.parse(localStorage.getItem("userInfo"))
   : null;
 
 export const login = createAsyncThunk("auth/login", async (payload, thunkAPI) => {
   try {
-    if (useDummyData) {
-      const data = buildDummyAuthResponse({ name: "Demo User", email: payload.email });
-      localStorage.setItem("userInfo", JSON.stringify(data));
-      return data;
-    }
-
     const { data } = await api.post("/auth/login", payload);
     localStorage.setItem("userInfo", JSON.stringify(data));
     return data;
@@ -35,12 +17,6 @@ export const login = createAsyncThunk("auth/login", async (payload, thunkAPI) =>
 
 export const register = createAsyncThunk("auth/register", async (payload, thunkAPI) => {
   try {
-    if (useDummyData) {
-      const data = buildDummyAuthResponse({ name: payload.name, email: payload.email });
-      localStorage.setItem("userInfo", JSON.stringify(data));
-      return data;
-    }
-
     const { data } = await api.post("/auth/register", payload);
     localStorage.setItem("userInfo", JSON.stringify(data));
     return data;

@@ -1,50 +1,51 @@
 # Local Food Guide (Pampanga Focus)
 
-Frontend-only repository for quiz submission.
+Quiz frontend built with React + Redux.
 
-## Project Structure
+## Frontend Coverage
 
-- `frontend/` React + Redux UI
-
-## Frontend Setup
-
-```bash
-cd frontend
-npm install
-copy .env.example .env
-npm start
-```
-
-## Required UI Coverage
-
-Implemented screens/pages:
+Screens/pages:
 
 - `LoginScreen`
 - `RegisterScreen`
 - `HomeScreen`
 
-Implemented components:
+Components:
 
 - `FormComponent`
 - `Loader`
 - `Message`
 - `ConversationItem`
-- `EmptyState` (Welcome screen)
+- `EmptyState` (welcome screen)
 
-## Dummy Data Policy
+## Behavior Rules Implemented
 
-Dummy data is enabled by default in frontend through `VITE_USE_DUMMY_DATA=true`.
+- Recommends specific Kapampangan dishes or local eateries in Pampanga.
+- Rejects non-food prompts.
+- Rejects requests that ask for places outside Pampanga.
+- Uses backend API calls only (no dummy data in frontend state flow).
 
-To integrate a real backend later:
+## API Configuration
 
-- Set `VITE_USE_DUMMY_DATA=false` in `frontend/.env`
-- Set `VITE_API_BASE_URL` to your API URL in `frontend/.env`
+Frontend API client:
 
-The frontend already calls centralized API routes via `frontend/src/app/api.js`.
+- `frontend/src/app/api.js`
 
-## Screenshot Checklist for Submission
+Default base URL:
 
-- UI screenshots for:
-  - Login screen
-  - Register screen
-  - Home screen (with recommendation results)
+- `http://localhost:8000/api`
+
+Override with environment variable:
+
+- `REACT_APP_API_BASE_URL`
+
+Guide endpoint used by frontend:
+
+- `POST /chat/` with body `{ "message": "..." }`
+
+## Run Frontend
+
+```bash
+npm --prefix frontend install
+npm --prefix frontend start
+```

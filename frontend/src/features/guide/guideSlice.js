@@ -1,47 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import api from "../../app/api";
 
-const useDummyData = process.env.REACT_APP_USE_DUMMY_DATA !== "false";
-
-const dummyRecommendations = [
-  {
-    id: "r1",
-    craving: "savory",
-    dish: "Sisig",
-    place: "Aling Lucing Sisig",
-    city: "Angeles",
-    province: "Pampanga",
-    notes: "Iconic sizzling chopped pork with calamansi and onions."
-  },
-  {
-    id: "r2",
-    craving: "soup",
-    dish: "Bulanglang Kapampangan",
-    place: "Bale Capampangan",
-    city: "San Fernando",
-    province: "Pampanga",
-    notes: "Comforting sour soup with vegetables and guava notes."
-  },
-  {
-    id: "r3",
-    craving: "hearty",
-    dish: "Bringhe",
-    place: "Everybody's Cafe",
-    city: "San Fernando",
-    province: "Pampanga",
-    notes: "Kapampangan rice dish with coconut milk and turmeric."
-  },
-  {
-    id: "r4",
-    craving: "sweet",
-    dish: "Tibok-Tibok",
-    place: "Susie's Cuisine",
-    city: "San Fernando",
-    province: "Pampanga",
-    notes: "Rich milk pudding topped with latik."
-  }
-];
-
 const foodKeywords = [
   "dish",
   "food",
@@ -55,7 +14,28 @@ const foodKeywords = [
   "sisig",
   "bringhe",
   "bulanglang",
-  "tibok"
+  "tibok",
+  "kapampangan",
+  "pampanga"
+];
+
+const outsidePampangaKeywords = [
+  "outside pampanga",
+  "manila",
+  "makati",
+  "quezon city",
+  "cebu",
+  "davao",
+  "baguio",
+  "iloilo",
+  "taguig",
+  "pasig",
+  "laguna",
+  "bulacan",
+  "pangasinan",
+  "tarlac",
+  "bataan",
+  "zambales"
 ];
 
 const looksLikeFoodRequest = (text = "") => {
@@ -63,40 +43,62 @@ const looksLikeFoodRequest = (text = "") => {
   return foodKeywords.some((keyword) => lower.includes(keyword));
 };
 
+const mentionsOutsidePampanga = (text = "") => {
+  const lower = text.toLowerCase();
+  return outsidePampangaKeywords.some((keyword) => lower.includes(keyword));
+};
+
 export const fetchRecommendations = createAsyncThunk(
   "guide/fetchRecommendations",
   async ({ craving, query }, thunkAPI) => {
     try {
-      if (useDummyData) {
-        if (query && !looksLikeFoodRequest(query)) {
-          return thunkAPI.rejectWithValue("I can only help with food-related requests in Pampanga.");
-        }
+      const combinedRequest = `${craving || ""} ${query || ""}`.trim();
 
-        const normalizedCraving = (craving || "").trim().toLowerCase();
-        const recommendations = normalizedCraving
-          ? dummyRecommendations.filter((item) => item.craving.includes(normalizedCraving))
-          : dummyRecommendations;
-
-        return {
-          recommendations,
-          message: recommendations.length ? "Showing Pampanga-only results." : "No direct match found."
-        };
+      if (!combinedRequest) {
+        return thunkAPI.rejectWithValue("Please enter a craving or question about Kapampangan food in Pampanga.");
       }
 
-      const params = {
-        province: "Pampanga"
+      if (!looksLikeFoodRequest(combinedRequest)) {
+        return thunkAPI.rejectWithValue(
+          "I can only help with food-related requests focused on Kapampangan dishes and Pampanga eateries."
+        );
+      }
+
+      if (mentionsOutsidePampanga(combinedRequest)) {
+        return thunkAPI.rejectWithValue(
+          "I can only suggest Kapampangan dishes or local eateries within Pampanga."
+        );
+      }
+
+      const prompt = [
+        "Recommend specific Kapampangan dishes or local eateries in Pampanga only.",
+        "Refuse non-food topics and any location outside Pampanga.",
+        craving ? `Craving: ${craving}` : null,
+        query ? `User request: ${query}` : null
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      const { data } = await api.post("/chat/", { message: prompt });
+
+      if (data.error) {
+        return thunkAPI.rejectWithValue(data.error);
+      }
+
+      return {
+        recommendations: [
+          {
+            id: `${Date.now()}`,
+            craving: craving || "general",
+            dish: "Kapampangan Recommendation",
+            place: "Pampanga",
+            city: "Pampanga",
+            province: "Pampanga",
+            notes: data.reply || "No recommendation returned."
+          }
+        ],
+        message: "Showing Pampanga-only recommendation."
       };
-
-      if (craving) {
-        params.craving = craving;
-      }
-
-      if (query) {
-        params.query = query;
-      }
-
-      const { data } = await api.get("/guide/recommendations", { params });
-      return data;
     } catch (error) {
       return thunkAPI.rejectWithValue(error.response?.data?.message || "Could not fetch recommendations.");
     }
